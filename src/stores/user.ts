@@ -55,7 +55,7 @@ export const useUserStore = defineStore("user", () => {
   const signOut = () => {
     localStorage.removeItem(accessTokenKey);
     user.value = emptyUser();
-    window.location.href = logoutUrl(window.location.origin);
+    window.location.href = logoutUrl(window.location.origin + import.meta.env.BASE_URL);
   };
 
   return { user, authorize, signIn, signOut };
