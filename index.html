@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KvadrantAI</title>
+    <script>
+      (function () {
+        try {
+          var url = new URL(window.location.href);
+          var token = url.searchParams.get("access_token");
+          if (token) {
+            localStorage.setItem("access_token", token);
+            url.searchParams.delete("access_token");
+            var clean = url.pathname + (url.search ? url.search : "") + url.hash;
+            window.history.replaceState({}, "", clean);
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
