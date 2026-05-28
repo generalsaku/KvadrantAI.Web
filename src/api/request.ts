@@ -38,11 +38,18 @@ export const requestPost = async (path: string, body: unknown) => {
 
 export type AnalysisStepStatus = "running" | "success" | "error";
 
+export interface AnalysisStepItem {
+  label: string;
+  detail?: string;
+  url?: string;
+}
+
 export interface AnalysisStep {
   type: "step";
   id: string;
   status: AnalysisStepStatus;
   label: string;
+  items?: AnalysisStepItem[];
 }
 
 export interface AnalysisResultData {
