@@ -36,6 +36,15 @@ export const requestPost = async (path: string, body: unknown) => {
   return read(response);
 };
 
+export interface AnalyzeResult {
+  url: string;
+  status: string;
+  message: string;
+}
+
+export const analyzeListing = (url: string): Promise<AnalyzeResult> =>
+  requestPost("/analysis", { url }) as Promise<AnalyzeResult>;
+
 export const loginUrl = (redirectUri: string) =>
   `${baseUrl()}/auth/login?redirectUri=${encodeURIComponent(redirectUri)}`;
 
