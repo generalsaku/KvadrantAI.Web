@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Loader2, CheckCircle2, XCircle, FileText } from "lucide-vue-next";
-import type { AnalysisStep } from "@/api/request";
+import type { ProgressStep } from "@/api/request";
 
-defineProps<{ steps: AnalysisStep[] }>();
+defineProps<{ steps: ProgressStep[] }>();
 </script>
 
 <template>

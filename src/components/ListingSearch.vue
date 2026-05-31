@@ -2,11 +2,11 @@
 import { computed, ref } from "vue";
 import { Search, Loader2 } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
-import AnalysisProgress from "@/components/AnalysisProgress.vue";
+import CollectionProgress from "@/components/CollectionProgress.vue";
 import {
-  analyzeListingStream,
-  type AnalysisStep,
-  type AnalysisResultData,
+  collectListingStream,
+  type ProgressStep,
+  type OrderResultData,
 } from "@/api/request";
 
 const allowedPrefixes = ["https://www.booli.se/", "https://www.hemnet.se/"];
@@ -14,8 +14,8 @@ const allowedPrefixes = ["https://www.booli.se/", "https://www.hemnet.se/"];
 const url = ref("");
 const loading = ref(false);
 const error = ref("");
-const steps = ref<AnalysisStep[]>([]);
-const result = ref<AnalysisResultData | null>(null);
+const steps = ref<ProgressStep[]>([]);
+const result = ref<OrderResultData | null>(null);
 
 const isValid = (value: string) => {
   const trimmed = value.trim();
@@ -26,7 +26,7 @@ const isValid = (value: string) => {
 
 const canSubmit = computed(() => isValid(url.value) && !loading.value);
 
-const upsertStep = (step: AnalysisStep) => {
+const upsertStep = (step: ProgressStep) => {
   const index = steps.value.findIndex((s) => s.id === step.id);
   if (index === -1) {
     steps.value.push(step);
@@ -49,7 +49,7 @@ const submit = async () => {
 
   loading.value = true;
   try {
-    await analyzeListingStream(trimmed, (message) => {
+    await collectListingStream(trimmed, (message) => {
       if (message.type === "step") {
         upsertStep(message);
       } else if (message.type === "result") {
@@ -58,7 +58,7 @@ const submit = async () => {
     });
   } catch {
     error.value =
-      "Something went wrong while analyzing the listing. Please try again.";
+      "Something went wrong while collecting the listing. Please try again.";
   } finally {
     loading.value = false;
   }
@@ -96,15 +96,28 @@ const submit = async () => {
     <div
       v-if="steps.length"
       class="mt-8 w-full rounded-3xl border border-input bg-muted/30 px-6 py-5 shadow-sm">
-      <AnalysisProgress :steps="steps" />
+      <CollectionProgress :steps="steps" />
     </div>
 
     <div
       v-if="result"
       class="mx-auto mt-6 w-full max-w-md rounded-lg border border-input bg-muted/30 p-4 text-left">
-      <p class="text-sm text-muted-foreground">
-        {{ result.summary ?? "Analysis complete." }}
+      <p class="text-sm font-medium text-foreground">
+        {{ result.status === "Completed" ? "Listing collected" : `Order ${result.status}` }}
       </p>
+      <dl class="mt-2 space-y-1 text-sm text-muted-foreground">
+        <div v-if="result.property.brfName">
+          BRF: <span class="text-foreground">{{ result.property.brfName }}</span>
+        </div>
+        <div v-if="result.property.brokerCompany">
+          Broker: <span class="text-foreground">{{ result.property.brokerCompany }}</span>
+        </div>
+        <div>
+          {{ result.property.documents.length }}
+          {{ result.property.documents.length === 1 ? "document" : "documents" }}
+          collected
+        </div>
+      </dl>
     </div>
   </div>
 </template>

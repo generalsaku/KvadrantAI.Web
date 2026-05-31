@@ -36,46 +36,91 @@ export const requestPost = async (path: string, body: unknown) => {
   return read(response);
 };
 
-export type AnalysisStepStatus = "running" | "success" | "error";
+export type ProgressStepStatus = "running" | "success" | "error";
 
-export interface AnalysisStepItem {
+export interface ProgressStepItem {
   label: string;
   detail?: string;
   url?: string;
 }
 
-export interface AnalysisStep {
+// One progress step in a streamed run. Steps are keyed by id and may transition
+// (running → success/error) in place; items is the optional nested sublist (e.g.
+// the harvested documents under the "documents" step).
+export interface ProgressStep {
   type: "step";
   id: string;
-  status: AnalysisStepStatus;
+  status: ProgressStepStatus;
   label: string;
-  items?: AnalysisStepItem[];
+  items?: ProgressStepItem[];
 }
 
-export interface AnalysisResultData {
-  url?: string;
-  price?: string | null;
-  area?: string | null;
-  rooms?: string | null;
-  summary?: string;
-  [key: string]: unknown;
+export type DocumentType =
+  | "Other"
+  | "Arsredovisning"
+  | "Energideklaration"
+  | "Stadgar";
+
+export interface ListingDocument {
+  type: DocumentType;
+  title: string;
+  url: string;
 }
 
-export interface AnalysisResultMessage {
+// The collected listing — mirrors the API's PropertyListing. Scrape-derived facts
+// are best-effort, so most are nullable; documents are the harvested BRF documents.
+export interface PropertyListing {
+  id: string;
+  url: string;
+  listingId?: string | null;
+  address?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  municipality?: string | null;
+  propertyType: string;
+  rooms?: number | null;
+  livingAreaSqm?: number | null;
+  floor?: string | null;
+  buildYear?: number | null;
+  askingPriceSek?: number | null;
+  monthlyFeeSek?: number | null;
+  balcony?: boolean | null;
+  elevator?: boolean | null;
+  brfName?: string | null;
+  brfOrgNumber?: string | null;
+  brokerCompany?: string | null;
+  publishedAt?: string | null;
+  createdAt: string;
+  documents: ListingDocument[];
+}
+
+export type OrderStatus = "InProgress" | "Failed" | "Completed";
+
+// The terminal payload of a collecting order: the order id, its final status, and
+// the collected property.
+export interface OrderResultData {
+  orderId: string;
+  status: OrderStatus;
+  property: PropertyListing;
+}
+
+export interface OrderResultMessage {
   type: "result";
-  data: AnalysisResultData;
+  data: OrderResultData;
 }
 
-export type AnalysisMessage = AnalysisStep | AnalysisResultMessage;
+export type ProgressMessage = ProgressStep | OrderResultMessage;
 
-// Streams analysis progress as newline-delimited JSON. The server flushes one
-// message per line as it works, and onMessage fires for each as it arrives.
-export const analyzeListingStream = async (
+// Starts a collecting order for a listing and streams its progress as
+// newline-delimited JSON. The server flushes one message per line as it works,
+// and onMessage fires for each as it arrives; the final "result" message carries
+// the collected property.
+export const collectListingStream = async (
   url: string,
-  onMessage: (message: AnalysisMessage) => void,
+  onMessage: (message: ProgressMessage) => void,
   signal?: AbortSignal
 ): Promise<void> => {
-  const response = await fetch(`${baseUrl()}/analysis`, {
+  const response = await fetch(`${baseUrl()}/orders`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ url }),
@@ -83,7 +128,7 @@ export const analyzeListingStream = async (
   });
 
   if (!response.ok || !response.body) {
-    throw new Error(`Analysis request failed (${response.status})`);
+    throw new Error(`Order request failed (${response.status})`);
   }
 
   const reader = response.body.getReader();
@@ -96,13 +141,13 @@ export const analyzeListingStream = async (
       const line = buffer.slice(0, newlineIndex).trim();
       buffer = buffer.slice(newlineIndex + 1);
       if (line.length > 0) {
-        onMessage(JSON.parse(line) as AnalysisMessage);
+        onMessage(JSON.parse(line) as ProgressMessage);
       }
     }
     if (final) {
       const tail = buffer.trim();
       if (tail.length > 0) {
-        onMessage(JSON.parse(tail) as AnalysisMessage);
+        onMessage(JSON.parse(tail) as ProgressMessage);
       }
     }
   };
