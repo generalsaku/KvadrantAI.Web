@@ -37,10 +37,7 @@ const initials = computed(() => {
 <template>
   <header class="border-b bg-background">
     <div class="container flex h-14 items-center justify-between">
-      <RouterLink
-        to="/"
-        class="font-semibold tracking-tight text-foreground hover:opacity-80"
-      >
+      <RouterLink to="/" class="font-semibold tracking-tight text-foreground hover:opacity-80">
         KvadrantAI
       </RouterLink>
 
@@ -53,8 +50,7 @@ const initials = computed(() => {
           <DropdownMenuTrigger as-child>
             <button
               class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              aria-label="User menu"
-            >
+              aria-label="User menu">
               <Avatar>
                 <AvatarImage v-if="user.image" :src="user.image" :alt="user.name" />
                 <AvatarFallback>{{ initials }}</AvatarFallback>
