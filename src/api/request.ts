@@ -36,6 +36,16 @@ export const requestPost = async (path: string, body: unknown) => {
   return read(response);
 };
 
+// Deletes a resource. The administration deletes reply 204 on success and 404 when
+// nothing matched, so success is simply response.ok rather than a parsed body.
+export const requestDelete = async (path: string): Promise<boolean> => {
+  const response = await fetch(`${baseUrl()}${path}`, {
+    method: "DELETE",
+    headers: headers(),
+  });
+  return response.ok;
+};
+
 export type ProgressStepStatus = "running" | "success" | "error";
 
 export interface ProgressStepItem {
@@ -162,6 +172,41 @@ export const collectListingStream = async (
   buffer += decoder.decode();
   flushLines(true);
 };
+
+export type OrderType = "Collection";
+
+// An order as the API projects it (GET /users/me and the administration user-orders
+// view share this shape). property is filled once collection completes; error carries
+// the reason when status is "Failed".
+export interface Order {
+  id: string;
+  type: OrderType;
+  status: OrderStatus;
+  url: string;
+  error?: string | null;
+  property?: PropertyListing | null;
+  createdAt: string;
+}
+
+// A listing row in the administration overview — barebone on purpose (name + id, plus
+// a little context). Mirrors the API's AdminListingModel.
+export interface AdminListing {
+  id: string;
+  name: string;
+  city?: string | null;
+  url: string;
+  createdAt: string;
+}
+
+// A user row in the administration overview. Identity (name/email) is never persisted,
+// so this is the durable, non-personal record. Mirrors the API's AdminUserModel.
+export interface AdminUser {
+  id: string;
+  provider: string;
+  providerId: string;
+  orderCount: number;
+  createdAt: string;
+}
 
 export const loginUrl = (redirectUri: string) =>
   `${baseUrl()}/auth/login?redirectUri=${encodeURIComponent(redirectUri)}`;

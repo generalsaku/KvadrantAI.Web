@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
-import HomeView from "@/views/HomeView.vue";
-import AdministrationView from "@/views/AdministrationView.vue";
+import HomeView from "@/views/home/HomeView.vue";
+import AdministrationView from "@/views/administration/AdministrationView.vue";
 import { useUserStore } from "@/stores/user";
 
 const requireAdministrationAccess = () => {
