@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { LogOut } from "lucide-vue-next";
+import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -15,7 +16,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const userStore = useUserStore();
+const router = useRouter();
 const { user } = storeToRefs(userStore);
+
+const goToAdministration = () => {
+  void router.push({ name: "administration" });
+};
 
 const initials = computed(() => {
   const name = user.value.name?.trim();
@@ -59,9 +65,16 @@ const initials = computed(() => {
             <DropdownMenuLabel>
               <div class="flex flex-col">
                 <span class="text-sm font-medium">{{ user.name || "Signed in" }}</span>
+                <span v-if="user.email" class="text-xs text-muted-foreground">
+                  {{ user.email }}
+                </span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem v-if="user.isAdministrator" @select="goToAdministration">
+              <span>Administration</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator v-if="user.isAdministrator" />
             <DropdownMenuItem @select="userStore.signOut">
               <LogOut />
               <span>Sign out</span>

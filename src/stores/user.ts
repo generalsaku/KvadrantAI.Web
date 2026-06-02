@@ -3,16 +3,21 @@ import { defineStore } from "pinia";
 import { loginUrl, logoutUrl } from "@/api/request";
 
 const accessTokenKey = "access_token";
+const administrationEmail = "josefgdev@gmail.com";
 
 interface UserState {
   isAuthorized: boolean;
+  isAdministrator: boolean;
   name: string;
+  email: string;
   image: string;
 }
 
 const emptyUser = (): UserState => ({
   isAuthorized: false,
+  isAdministrator: false,
   name: "",
+  email: "",
   image: "",
 });
 
@@ -43,7 +48,9 @@ export const useUserStore = defineStore("user", () => {
 
     user.value = {
       isAuthorized: true,
+      isAdministrator: isAdministrationUser(jwt.email),
       name: jwt.name ?? "",
+      email: jwt.email ?? "",
       image: jwt.image ?? "",
     };
   };
@@ -63,10 +70,14 @@ export const useUserStore = defineStore("user", () => {
 
 interface JwtPayload {
   name?: string;
+  email?: string;
   image?: string;
   exp?: number;
   userid?: string;
 }
+
+const isAdministrationUser = (email?: string) =>
+  (email ?? "").toLowerCase() === administrationEmail;
 
 const parseJwt = (token: string): JwtPayload | null => {
   try {
